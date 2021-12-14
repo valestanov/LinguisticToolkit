@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 
 setup(
     name="PolyglotLinguisticToolkit",
@@ -8,6 +8,5 @@ setup(
     description="Polyglot Multilingual Linguistic Toolkit. Transliteration and process of many language, especially in Asia.",
     url="https://github.com/valestanov/LinguisticToolkit",
     license='MIT License',
-    python_requires='>=3',
 )
 
