@@ -10,3 +10,12 @@ def writelist(thelist,langfile,form):
         for i in thelist:
             f.writelines(form % tuple(i))
 
+def fileoutput(inputfile,outputfile,func):
+    with open(inputfile,'r',encoding='utf-8') as ipfile:
+        inputtext = ipfile.read()
+    outputtext = func(inputtext)
+    with open(outputfile,'w',encoding='utf-8') as opfile:
+        opfile.write(outputtext)
+    return
+
+
