@@ -1,4 +1,4 @@
-import sys
+from linguistictoolkit.tools import textclass
 
 smdic = {"":"",
 "b":"p",
@@ -52,6 +52,7 @@ ymdic = {"i":"i-",
 "uer":"uə-r",
 "ua":"ua-",
 "uo":"uo-"}
+
 sddic = {
     "o":("⁴⁴","̩"),
     "x":("³³",""),
@@ -63,7 +64,35 @@ sddic = {
     "d":("²¹","̩")
     }
 
-def baisyl(bai):
+bai = textclass.Language('Bai')
+baiLatin = textclass.Orthography('Bai-Latin',bai)
+baiIPA = textclass.Orthography('Bai-IPA',bai)
+baiLatinabc = 'abcdefghijklmnopqrstuvwxyz'
+baiPunc = ',.?!:;'
+def baiLatinCharattr(char):
+    if char.lower() in baiLatinabc:
+        return "word"
+    elif char in baiPunc:
+        return "punc"
+    elif char == ' ':
+        return "space"
+    else:
+        return "non"
+
+baiLatin.setCharattr(baiLatinCharattr)
+
+def baiLatinCombinable(word,char):
+    if baiLatin.getCharattr(char) == word.getWordattr():
+        if baiLatin.getCharattr(char) in ('word','non','space'):
+            return True
+    return False
+
+baiLatin.setCombinable(baiLatinCombinable)
+
+def baiSyl(baiWord):
+    if baiWord.getWordattr() != 'word':
+        return baiWord.getText()
+    bai = baiWord.getText().lower()
     sm = ''
     ym = ''
     sd = ''
@@ -97,6 +126,11 @@ def baisyl(bai):
     ipa = smipa + ymipa.replace('-',sdipa[1]) + sdipa[0]
     return ipa
 
+baiLatin.setConvert(baiIPA,baiSyl)
+
+'''
+The function baitoipa is abandonned. Please use the new function:
+baiLatin.getConvert(bai,baiIPA)
 def baitoipa(bai):
     bai = bai.lower()
     word = ''
@@ -121,3 +155,4 @@ def baitoipa(bai):
             ipa += word
         word = ''
     return ipa
+'''
