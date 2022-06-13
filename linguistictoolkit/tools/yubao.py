@@ -73,7 +73,7 @@ def sdtodiacritics(word,diacriticstable):
                 newword += char
             else:
                 try:
-                    newword += diacriticstable['sd']
+                    newword += diacriticstable[sd]
                     newword += ' '
                 except KeyError:
                     newword += sd
