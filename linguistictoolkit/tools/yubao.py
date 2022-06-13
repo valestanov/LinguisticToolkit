@@ -20,7 +20,7 @@ def tableproc(table):
 def itemsproc(items):
     opitems = []
     for num,i in enumerate(items,start=1):
-        cols = ('name','syllable','remark','notes')
+        cols = ('name','syllable','remark','note')
         inhalt = ['%04d'%num,]
         for col in cols:
             try:
