@@ -30,7 +30,7 @@ def itemsproc(items):
         opitems.append(inhalt)
     return opitems
 
-def YubaoJsonProc(ipfile,opfile)
+def YubaoJsonProc(ipfile,opfile):
     #From JSON on Yubao Site to readable word list
     try:
         with open(ipfile,'r',encoding='utf-8') as ipf:
