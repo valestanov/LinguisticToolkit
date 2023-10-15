@@ -24,7 +24,7 @@ def itemsproc(items):
         inhalt = ['%04d'%num,]
         for col in cols:
             try:
-                inhalt.append(i[col].replace('\t',' ').strip())
+                inhalt.append(i[col].replace('\t',' ').replace('\n',' ').strip())
             except KeyError:
                 inhalt.append('')
         opitems.append(inhalt)
@@ -49,10 +49,10 @@ def YubaoJsonProc(ipfile,opfile):
     print('全表输出完成')
 
 
-def getsd(word):
+def getsd(word, sdfh='0123456789'):
     sdtype = ''
     for char in word:
-        if char in '0123456789':
+        if char in sdfh:
             sdtype += char
         else:
             sdtype += '-'
@@ -61,12 +61,22 @@ def getsd(word):
     sdtype = sdtype.strip('-')
     return sdtype
 
-def sdtodiacritics(word,diacriticstable):
+def commonsdfh(description):
+    sdfhlist = {'normal': '0123456789',
+                'diac': '⁰¹²³⁴⁵⁶⁷⁸⁹',
+                'ru': '0123456789ʔ',
+                'diacru': '⁰¹²³⁴⁵⁶⁷⁸⁹ʔ'}
+    try:
+        return sdfhlist[description]
+    except KeyError:
+        return sdfhlist['normal']
+
+def sdtodiacritics(word,diacriticstable,sdfh='0123456789'):
     word += ' '
     newword = ''
     sd = ''
     for char in word:
-        if char in '0123456789':
+        if char in sdfh:
             sd += char
         else:
             if sd == '':
@@ -74,11 +84,45 @@ def sdtodiacritics(word,diacriticstable):
             else:
                 try:
                     newword += diacriticstable[sd]
-                    newword += ' '
+                    newword += '-'
                 except KeyError:
                     newword += sd
                 newword += char
                 sd = ''
+    newword = newword.replace('- ',' ')
     newword = newword[:-1]
     return newword
-                
+
+def autosddic(sdlist):
+    numdict = {'0':'⁰', '1':'¹', '2':'²', '3':'³', '4':'⁴', '5':'⁵', '6':'⁶', '7':'⁷', '8':'⁸', '9':'⁹',}
+    sddic = {}
+    for sd in sdlist:
+        sdout = ''
+        for char in sd:
+            try:
+                sdout += numdict[char]
+            except KeyError:
+                sdout += char
+        sddic[sd] = sdout
+    return sddic
+
+def getsdgroup(wordlist,sdfh='0123456789'):
+    sdlist = [getsd(w,sdfh) for w in wordlist]
+    sdgroup = sorted(list(set(sdlist)))
+    allsd = sorted(list(set([sd.strip() for sd in '-'.join(sdgroup).split('-')])))
+    sdlen = {}
+    for sd in sdgroup:
+        charlen = sd.count('-') + 1
+        if charlen not in sdlen:
+            sdlen[charlen] = []
+        sdlen[charlen].append(sd)
+    for charlen in sdlen:
+        sdlen[charlen] = sorted(sdlen[charlen])
+    bisyl = []
+    for i in range(3):
+        try:
+            bisyl.append(sdlen[i])
+        except KeyError:
+            continue
+    return allsd, bisyl, sdlen
+    
