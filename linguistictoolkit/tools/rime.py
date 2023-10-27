@@ -66,8 +66,11 @@ def gettext(textlines,lborder='',rborder=''):
                     if inborder:
                         newline += char
                     else:
-                        if (not inotherborder) and char in puncdic:
+                        if (not inotherborder) and char in punclist:
+                            if char in puncdic:
                                 newline += puncdic[char]
+                            elif char in punclist:
+                                newline += char
                         else:
                             newline += ' '
             newline = nodupspace(newline).strip()
@@ -103,6 +106,7 @@ def rimetodic(rimetext):
 def texttrans(text,dic,lborder = '\ue000',rborder = '\ue001'):
     innerdic = {}
     maxlength = 6
+    allword = set(text)
     maxlength = max(int(math.log10(len(allword))),6)
     maxtext = '%0' + str(maxlength) + 'd'
     for n,i in enumerate(sorted(dic.items(),key=lambda x:len(x[0]),reverse=True)):
@@ -119,6 +123,7 @@ def texttrans(text,dic,lborder = '\ue000',rborder = '\ue001'):
 def texttowords(text,lborder='\ue000',rborder = '\ue001'):
     text = text.replace('\r','').strip('\ufeff\n')
     newtext = ''
+    log = ''
     flag = False
     for i in text:
         if i == lborder:
@@ -133,24 +138,27 @@ def texttowords(text,lborder='\ue000',rborder = '\ue001'):
     text = newtext
     wlist = []
     sentlist = text.split('\n')
-    for sent in sentlist:
-        sent = sent.replace(rborder,lborder)
-        sentinhalt = sent.replace(lborder,'')
-        sent = sent.split(lborder)
-        sentwords = []
-        for word in sent:
-            if word not in sentwords and word not in punclist + ['', ' ']:
-                sentwords.append(word)
-        print('句子：\n%s' % gettext(sentinhalt,1))
-        for i in sentwords:
-            print(gettext(i,1),gettext(i,2),gettext(i,3),gettext(i,4),sep='\t')
-        wordappend = input('需要添补的词，请用逗号隔开：\n').replace('，',',').split(',')
-        sentwords.extend([i.strip() for i in wordappend if i.strip() != ''])
-        for i in sentwords:
-            if i not in [j[0] for j in wlist]:
-                wlist.append([i,gettext(i,1),gettext(i,2),gettext(i,3),gettext(i,4),'w'])
-        wlist.append([sentinhalt,gettext(sentinhalt,1),gettext(sentinhalt,2),gettext(sentinhalt,3),gettext(sentinhalt,4),'s'])
-        log = '\n'.join(['\t'.join(i) for i in wlist])
+    try:
+        for sent in sentlist:
+            sent = sent.replace(rborder,lborder)
+            sentinhalt = sent.replace(lborder,'')
+            sent = sent.split(lborder)
+            sentwords = []
+            for word in sent:
+                if word not in sentwords and word not in punclist + ['', ' ']:
+                    sentwords.append(word)
+            print('句子：\n%s' % gettext(sentinhalt,1))
+            for i in sentwords:
+                print(gettext(i,1),gettext(i,2),gettext(i,3),gettext(i,4),sep='\t')
+            wordappend = input('需要添补的词，请用逗号隔开：\n').replace('，',',').split(',')
+            sentwords.extend([i.strip() for i in wordappend if i.strip() != ''])
+            for i in sentwords:
+                if i not in [j[0] for j in wlist]:
+                    wlist.append([i,gettext(i,1),gettext(i,2),gettext(i,3),gettext(i,4),'w'])
+            wlist.append([sentinhalt,gettext(sentinhalt,1),gettext(sentinhalt,2),gettext(sentinhalt,3),gettext(sentinhalt,4),'s'])
+            log = '\n'.join(['\t'.join(i) for i in wlist])
+    except:
+        return log
     return '\n'.join(['\t'.join(i) for i in wlist])
 
 def inabc(text):
