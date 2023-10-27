@@ -1,6 +1,6 @@
 def lbltoaegisub(lbl):
-    lbl = lbl.replace('\r','').strip('\n')
-    lbl = [i for i in lbl if len(i.split('\t'))>3]
+    lbl = lbl.replace('\r','').split('\n')
+    lbl = [i for i in lbl if len(i.split('\t'))>1]
     newlbl = []
     for i in lbl:
         i = i.split('\t')
@@ -15,15 +15,16 @@ def lbltoaegisub(lbl):
     return '\n'.join(newlbl)
 
 def aegisubtolbl(lbl):
-    lbl = lbl.replace('\r','').strip('\n')
-    lbl = [i for i in lbl if len(i.split(','))>3]
+    lbl = lbl.replace('\r','').split('\n')
+    lbl = [i for i in lbl if len(i.split(','))>8]
+    newlbl = []
     for i in lbl:
         i = i.split(',')
         beg = i[1].split(':')
         end = i[2].split(':')
         bgm = int(beg[0])*3600 + int(beg[1])*60 + float(beg[2])
         enm = int(end[0])*3600 + int(end[1])*60 + float(end[2])
-        txt = i[9:]
+        txt = '\,'.join(i[9:])
         t = '%f\t%f\t%s' % (bgm,enm,txt)
         newlbl.append(t)
     return '\n'.join(newlbl)
