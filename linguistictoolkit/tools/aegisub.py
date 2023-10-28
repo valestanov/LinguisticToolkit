@@ -24,7 +24,7 @@ def aegisubtolbl(lbl):
         end = i[2].split(':')
         bgm = int(beg[0])*3600 + int(beg[1])*60 + float(beg[2])
         enm = int(end[0])*3600 + int(end[1])*60 + float(end[2])
-        txt = '\,'.join(i[9:])
+        txt = ','.join(i[9:])
         t = '%f\t%f\t%s' % (bgm,enm,txt)
         newlbl.append(t)
     return '\n'.join(newlbl)
