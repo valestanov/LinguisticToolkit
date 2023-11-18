@@ -208,7 +208,7 @@ def textsplittrans(text,dic,splitfunc,splitter = '\ue002',lborder = '\ue000',rbo
             if syl in wordvecdic:
                 newword += wordvecdic[syl]
             else:
-                newtext += syl
+                newword += syl
         newdic[newword] = newdic[word]
     text = newtext
     for n,i in enumerate(sorted(newdic.items(),key=lambda x:len(x[0]),reverse=True)):
@@ -223,6 +223,40 @@ def textsplittrans(text,dic,splitfunc,splitter = '\ue002',lborder = '\ue000',rbo
     for word in wordvecdic:
         text = text.replace(wordvecdic[word],word)
     return text
-            
+
+def directsplit(text,func):
+    textsplit = []
+    word = ''
+    flag = True
+    for char in text:
+        if func(char):
+            flag = True
+            word += char
+        else:
+            flag = False
+            if word != '':
+                word = '\ue000' + word + '\ue001'
+                textsplit.append(word)
+            word = ''
+    if flag:
+        if word != '':
+                word = '\ue000' + word + '\ue001'
+                textsplit.append(word)
+    return textsplit
+
+def textdirectsplit(text,func):
+    text = text.replace('\r','').split('\n')
+    totallist = []
+    for s in text:
+        wlist = directsplit(s,func)
+        for w in wlist:
+            w = w.strip('\ue000\ue001')
+            if (w,'w') not in totallist:
+                totallist.append(tuple([w,'w']))
+        totallist.append(tuple([s,'s']))
+    return '\n'.join(['\t'.join(i) for i in totallist])
+
+
+
         
     

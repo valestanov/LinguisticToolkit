@@ -6,11 +6,14 @@ def lbltoaegisub(lbl):
         i = i.split('\t')
         beg = float(i[0])
         end = float(i[1])
+        text = ''
+        if len(i)>2:
+            text = '\t'.join(i[2:])
         bgm,bgs = divmod(beg,60)
         bgh,bgm = divmod(bgm,60)
         enm,ens = divmod(end,60)
         enh,enm = divmod(enm,60)
-        t = 'Dialogue: 0,%d:%0d:%02.2f,%d:%0d:%02.2f,Default,,0,0,0,,' % (bgh,bgm,bgs,enh,enm,ens)
+        t = 'Dialogue: 0,%d:%02d:%02.2f,%d:%02d:%02.2f,Default,,0,0,0,,%s' % (bgh,bgm,bgs,enh,enm,ens,text)
         newlbl.append(t)
     return '\n'.join(newlbl)
 
