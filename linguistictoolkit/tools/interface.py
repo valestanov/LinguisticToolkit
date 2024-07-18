@@ -7,7 +7,8 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QFont, QFontDatabase, QKeySequence, QShortcut
 from PyQt6.QtCore import Qt
 import re
-from engines import SplitterEngine, LookupEngine, DisplayerEngine
+from linguistictoolkit.tools.engines import SplitterEngine, LookupEngine, DisplayerEngine
+from linguistictoolkit.tools import langdeterminer
 
 class ShortcutEditor(QDialog):
     def __init__(self, func_name, current_shortcut, parent = None):
@@ -117,9 +118,11 @@ class Column:
             
         cursor = self.main_text_edit.textCursor()
         cursor_pos = cursor.position()
+        vertical_scroll_pos = self.main_text_edit.verticalScrollBar().value()
         self.main_text_edit.setHtml(self.displayer.display(self.parent.split_text))
         cursor.setPosition(cursor_pos)
         self.main_text_edit.setTextCursor(cursor)
+        self.main_text_edit.verticalScrollBar().setValue(vertical_scroll_pos)
         
         if self.isoriginal:
             self.main_text_edit.blockSignals(False)
@@ -488,8 +491,7 @@ def LangInterface(column_count = 3, splitter: SplitterEngine = None, lookup: Loo
 
 #For test
 if __name__ == "__main__":
-    def lower(text):
-        return text.lower()
-    def upper(text):
-        return text.upper()    
-    LangInterface(3,shortcut_funcs={upper,lower})
+    def set_sp(lemma):
+	    if langdeterminer.is_punct(lemma.original[0]):
+		    lemma.properties['space'] = 'space'   
+    LangInterface(1,lookup_general_funcs=[set_sp])

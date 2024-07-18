@@ -1,3 +1,4 @@
+import unicodedata
 
 def islang_by_name(lang_name):
     lang_name = lang_name.strip().lower()
@@ -23,6 +24,10 @@ def islang_by_name(lang_name):
         return lang_dict[lang_name]
     else:
         return None
+
+def is_punct(char):
+    char_category = unicodedata.category(char)
+    return (char_category[0] in 'PSZ' or char_category in ('Cc'))
 
 def is_cn(char):
     if '\u4e00' <= char <= '\u9fef' or char == '〇': #基本区

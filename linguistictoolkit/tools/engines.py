@@ -1,8 +1,8 @@
 import re
 from typing import Callable, Optional, Dict, List
-from langsplitter import split_text_by_char, split_text_by_word, split_text_sea_lang
-from textsplitter import Lemma, SentenceSplitter
-from langdeterminer import islang_by_name
+from linguistictoolkit.tools.langsplitter import split_text_by_char, split_text_by_word, split_text_sea_lang
+from linguistictoolkit.tools.textsplitter import Lemma, SentenceSplitter
+from linguistictoolkit.tools.langdeterminer import islang_by_name
 
 class SplitterEngine:
     def __init__(self, func_list=None, lang: Optional[str] = None, islang: Optional[Callable[[str],bool]] = None):
@@ -119,8 +119,8 @@ class LookupEngine:
             self.general_func_list[func.__name__] = func
     
     def _convert_to_lemma(self, func):
-        test_str = ""
-        test_lemma = Lemma("")
+        test_str = "a"
+        test_lemma = Lemma("a")
         try:
             result = func(test_str)
             return lambda lemma: func(lemma.original)
@@ -209,7 +209,7 @@ class LookupEngine:
                 lemma.dict_content[key] = self.func_list[func](lemma)
             except:
                 lemma.dict_content[key] = lemma.original
-        for func in self.general_func_list:
+        for func in self.general_func_list.values():
             func(lemma)
 
     def lookup(self, split_text):
@@ -273,8 +273,8 @@ class DisplayerEngine:
             
     def _convert_to_lemma(self, func: Callable) -> Optional[Callable]:
         # 转换函数，确保其能处理 Lemma 对象
-        test_str = ""
-        test_lemma = Lemma("")
+        test_str = "a"
+        test_lemma = Lemma("a")
         try:
             result = func(test_str)
             return lambda lemma: func(self._word_text(lemma,self.key))

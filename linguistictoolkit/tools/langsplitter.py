@@ -1,5 +1,5 @@
 import unicodedata
-from textsplitter import Lemma, SentenceSplitter
+from linguistictoolkit.tools.textsplitter import Lemma, SentenceSplitter
 from typing import Callable, List, Optional
 
 def is_punct(char):
