@@ -183,7 +183,7 @@ class Column:
             self.format_string_edit.setPlaceholderText("格式化字符串")
         
 class MainWindow(QMainWindow):
-    def __init__(self, column_count = 3, splitter: SplitterEngine = None, lookup: LookupEngine = None, displayer: DisplayerEngine = None, splitter_funcs=None, lookup_funcs=None, lookup_general_funcs = None, displayer_funcs=None, shortcut_funcs = None, font_list=None, cursor_follow = True):
+    def __init__(self, column_count = 3, splitter: SplitterEngine = None, lookup: LookupEngine = None, displayer: DisplayerEngine = None, splitter_funcs=None, lookup_funcs=None, lookup_general_funcs = None, displayer_funcs=None, shortcut_funcs = None, dictionary_file=None, font_list=None, cursor_follow = True):
         super().__init__()
 
         self.column_count = column_count
@@ -192,6 +192,7 @@ class MainWindow(QMainWindow):
         self.cursor_follow = cursor_follow
         self.loginfo = ''
         self.shortcut_dic = {}
+        self.lookup.dictionary_file = dictionary_file if dictionary_file else None
 
         if displayer is None:
             self.displayers = [DisplayerEngine() for _ in range(column_count)]
@@ -221,12 +222,13 @@ class MainWindow(QMainWindow):
             for func in shortcut_funcs:
                 self.shortcut_dic[func.__name__] = (func,None)
         self.font_list = font_list if font_list else []
-        
+        self.split_text = self.splitter.split('')
+
         self.setWindowTitle("Text Processor")
-        self.setGeometry(100, 100, 1000, 600)
+        self.setGeometry(100, 100, 1000, 800)
         self.initUI()
         self.setup_signals()
-        self.split_text = self.splitter.split('')
+        self.update_lookup()
 
     def initUI(self):
         self.columns = [Column(self, self.displayers[i], self.font_list, isoriginal=(i==0)) for i in range(self.column_count)]
@@ -271,18 +273,26 @@ class MainWindow(QMainWindow):
         splitter_layout = QHBoxLayout()
         splitter_layout.addWidget(self.splitter_func_box)
         splitter_layout.addWidget(self.islang_regex_edit)
+        splitter_layout.setStretch(1,4) #伸缩比为4
         splitter_layout.addWidget(self.splitter_lang_edit)   
+        splitter_layout.setStretch(2,1) #伸缩比为1（islang_regex_edit的1/4）
         splitter_layout.addWidget(self.cursor_follow_box) 
+        
+        
 
         lookup_layout = QHBoxLayout()
         lookup_layout.addWidget(self.dict_path_edit)
+        lookup_layout.setStretch(0,4) #伸缩比为4
         lookup_layout.addWidget(self.index_column_edit)
+        lookup_layout.setStretch(1,1) #伸缩比为1
         lookup_layout.addWidget(self.update_lookup_button)
         lookup_layout.addWidget(self.clear_cache_button)
 
         log_layout = QHBoxLayout()
         log_layout.addWidget(self.log_text_edit)
+        log_layout.setStretch(0,3) #伸缩比为3
         log_layout.addWidget(self.shortcut_table)
+        log_layout.setStretch(1,2) #伸缩比为1
 
         main_layout = QVBoxLayout()
         main_layout.addLayout(text_layout)
@@ -290,7 +300,7 @@ class MainWindow(QMainWindow):
         main_layout.addLayout(lookup_layout)
         main_layout.addLayout(log_layout)
 
-        main_layout.setStretchFactor(text_layout, 9)
+        main_layout.setStretchFactor(text_layout, 4)
         main_layout.setStretchFactor(log_layout, 1)
 
         container = QWidget()
@@ -470,14 +480,16 @@ class MainWindow(QMainWindow):
         import traceback
         print(traceback.print_exc())
 
+def LangInterface(column_count = 3, splitter: SplitterEngine = None, lookup: LookupEngine = None, displayer: DisplayerEngine = None, splitter_funcs=None, lookup_funcs=None, lookup_general_funcs = None, displayer_funcs=None, shortcut_funcs = None, dictionary_file=None, font_list=None, cursor_follow = True):
+    app = QApplication(sys.argv)
+    window = MainWindow(column_count=column_count, splitter=splitter, lookup=lookup, displayer=displayer, splitter_funcs=splitter_funcs, lookup_funcs=lookup_funcs, lookup_general_funcs=lookup_general_funcs, displayer_funcs=displayer_funcs, shortcut_funcs=shortcut_funcs, dictionary_file=dictionary_file, font_list=font_list, cursor_follow=cursor_follow)
+    window.show()
+    sys.exit(app.exec())
+
+#For test
 if __name__ == "__main__":
     def lower(text):
         return text.lower()
-    
     def upper(text):
-        return text.upper()
-    
-    app = QApplication(sys.argv)
-    window = MainWindow(shortcut_funcs={lower,upper})
-    window.show()
-    sys.exit(app.exec())
+        return text.upper()    
+    LangInterface(3,shortcut_funcs={upper,lower})
