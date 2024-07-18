@@ -1,12 +1,13 @@
 from typing import List, Dict
 
 class Lemma:
-    def __init__(self, original: str, for_match: str = None, in_dict: bool = None, properties: Dict = {}, dict_content: Dict = {}, pos: int = None):
+    def __init__(self, original: str, for_match: str = None, in_dict: bool = None, is_lang: bool = None, properties = None, dict_content = None, pos: int = None):
         self.original = original  # 原始单词
         self.for_match = for_match if for_match is not None else self.original.lower()  # 用于匹配的单词，默认为小写的原始单词
         self.in_dict = in_dict  # 是否在字典中
-        self.properties = properties  # 属性
-        self.dict_content = dict_content  # 字典内容
+        self.is_lang = is_lang
+        self.properties = properties if properties is not None else {} # 属性
+        self.dict_content = dict_content if dict_content is not None else {}  # 字典内容
         self.pos = pos  # 单词在句子中的位置
         self.isFocus = False #是否当前光标聚焦
 
@@ -15,6 +16,12 @@ class SentenceSplitter:
         # word_list 是包含 Lemma 类元素的列表
         self.word_list = word_list
         self._update_positions()
+
+    def __iter__(self):
+        return iter(self.word_list)
+
+    def __getitem__(self, index):
+        return self.word_list[index]
 
     def _update_positions(self):
         """更新每个单词在句子中的位置，用于决定光标位置"""
@@ -67,7 +74,9 @@ class SentenceSplitter:
                             matched_words = self.word_list[current_index:end_index]
                             new_original = ''.join(w.original for w in matched_words)
                             new_for_match = ''.join(w.for_match for w in matched_words)
-                            new_word = Word(new_original, for_match=new_for_match, in_dict=True)
+                            new_properties = self.word_list[current_index].properties
+                            new_is_lang = self.word_list[current_index].is_lang
+                            new_word = Lemma(new_original, for_match=new_for_match, in_dict=True, is_lang = new_is_lang, properties=new_properties)
                             
                             # 更新单词列表
                             self.word_list = self.word_list[:current_index] + [new_word] + self.word_list[end_index:]
@@ -78,7 +87,7 @@ class SentenceSplitter:
         return None
 
     def set_word_focus(self, pos: int) -> int:
-        for word in enumerate(self.word_list):
+        for word in self.word_list:
             if word.pos <= pos < word.pos + len(word.original):
                 word.isFocus = True
             else:
