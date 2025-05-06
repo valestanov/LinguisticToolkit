@@ -11,8 +11,8 @@ from linguistictoolkit.tools import langdeterminer
 from linguistictoolkit.tools import engines
 from linguistictoolkit.korean import ankimasker
 from linguistictoolkit.vietnamese import Qnc2Telex
-import zhuang
-import bai
-import fuzhou
-import vietnamese
-import korean
+from linguistictoolkit import zhuang
+from linguistictoolkit import bai
+from linguistictoolkit import fuzhou
+from linguistictoolkit import vietnamese
+from linguistictoolkit import korean
