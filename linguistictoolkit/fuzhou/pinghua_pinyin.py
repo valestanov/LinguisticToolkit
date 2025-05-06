@@ -1,5 +1,6 @@
 
-print('本程序只处理双音节，且不处理轻声b！轻声的变调规则：前字不变，后字只改变声调。')
+if __name__ == "__main__":
+    print('本程序只处理双音节，且不处理轻声b！轻声的变调规则：前字不变，后字只改变声调。')
 
 class pinghua_sm:
     def __init__(self,phzsm,ipasm,pysm,vhbian,vhbianpy,nbian,nbianpy):
