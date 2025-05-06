@@ -83,7 +83,10 @@ def split_text_by_word(text: str, lang: Optional[str] = None, islang: Optional[C
         if is_punct(char):
             submit_current_lemma(current_token)
             current_token = ''
-            wordlist.append(Lemma(char, is_lang=False, in_dict=True))
+            if char not in "' -་":
+                wordlist.append(Lemma(char, is_lang=False, in_dict=True))
+            else:
+                wordlist.append(Lemma(char, is_lang=False))
         elif islang(char):
             in_lang = True
             current_token += char
@@ -97,6 +100,9 @@ def split_text_by_word(text: str, lang: Optional[str] = None, islang: Optional[C
 
 def split_text_sea_lang(text: str, lang: Optional[str] = None, islang: Optional[Callable[[str], bool]] = None) -> SentenceSplitter:
     extend_to_right = 'ເແໂໃໄเแโใไ္្'
+    equal_to_letter = 'ៗ'
+    check_no_submit = '်'
+
     if islang is None:
         islang = lambda x: unicodedata.category(x)[0] not in 'PSZ' or unicodedata.category(x) not in ('Cc')
 
@@ -112,7 +118,7 @@ def split_text_sea_lang(text: str, lang: Optional[str] = None, islang: Optional[
                 wordlist.append(Lemma(token, is_lang=False))
     
     
-    for char in text:
+    for pos, char in enumerate(text):
         if in_lang ^ islang(char):  # 使用异或运算符检测语言切换
             submit_current_lemma(current_token)
             current_token = ''
@@ -121,7 +127,17 @@ def split_text_sea_lang(text: str, lang: Optional[str] = None, islang: Optional[
             current_token = ''
             wordlist.append(Lemma(char, is_lang=False, in_dict=True))
         elif islang(char):
-            if unicodedata.category(char) == 'Lo' and is_extendable == False:
+            letter_to_submit = unicodedata.category(char) == 'Lo'
+            if char in equal_to_letter:
+                letter_to_submit = True
+            if unicodedata.category(char) == 'Nd':
+                letter_to_submit = True
+            if is_extendable:
+                letter_to_submit = False
+            if pos != len(text) - 1:
+                if text[pos+1] in check_no_submit:
+                    letter_to_submit = False
+            if letter_to_submit:
                 submit_current_lemma(current_token)
                 current_token = ''
             in_lang = True

@@ -2,13 +2,25 @@ import sys
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QTextEdit, QVBoxLayout, QHBoxLayout, QFormLayout,
     QWidget, QPushButton, QLineEdit, QComboBox, QCheckBox, QGroupBox, QTableWidget, 
-    QKeySequenceEdit, QDialogButtonBox, QDialog, QTableWidgetItem, QHeaderView
+    QKeySequenceEdit, QDialogButtonBox, QDialog, QTableWidgetItem, QHeaderView, QScrollArea
 )
-from PyQt6.QtGui import QFont, QFontDatabase, QKeySequence, QShortcut
-from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QFont, QFontDatabase, QKeySequence, QShortcut, QTextCursor
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 import re
 from linguistictoolkit.tools.engines import SplitterEngine, LookupEngine, DisplayerEngine
 from linguistictoolkit.tools import langdeterminer
+
+class PlainTextEdit(QTextEdit):
+    #Added in 16 Nov 2024. 
+    #保证从Word复制时，不因为MimeData导致复制失败。
+    def insertFromMimeData(self, source):
+        """
+        重写此方法，确保所有粘贴或拖放行为均为纯文本
+        """
+        if source.hasText():
+            self.insertPlainText(source.text())  # 强制插入纯文本
+        else:
+            super().insertFromMimeData(source)
 
 class ShortcutEditor(QDialog):
     def __init__(self, func_name, current_shortcut, parent = None):
@@ -34,9 +46,11 @@ class Column:
         self.setup_signals()
         
     def initUI(self):
-        self.main_text_edit = QTextEdit()
+        self.main_text_edit = PlainTextEdit()
         self.main_text_edit.setFont(QFont(self.displayer.font, self.displayer.font_size))
-        
+        #self.main_text_edit.setUndoRedoEnabled(True)
+        self.main_text_edit.setUndoRedoEnabled(False)
+
         if not self.isoriginal:
             self.keys_edit = QLineEdit()
             self.lookup_func_box = QComboBox()
@@ -184,7 +198,21 @@ class Column:
             self.format_string_edit.setText(string)
         else:
             self.format_string_edit.setPlaceholderText("格式化字符串")
-        
+
+    def sync_cursor(self):
+        if not self.isoriginal:
+            aux_text_edit = QTextEdit()
+            aux_text_edit.setHtml(self.displayer.get_cursor_text(self.parent.split_text))
+            cursor = aux_text_edit.textCursor()
+            cursor.movePosition(QTextCursor.MoveOperation.End)
+            cursor_pos = cursor.position()
+            if cursor_pos:
+                cursor = self.main_text_edit.textCursor()
+                cursor.setPosition(cursor_pos, QTextCursor.MoveMode.MoveAnchor)
+                self.main_text_edit.setTextCursor(cursor)
+                self.main_text_edit.ensureCursorVisible()
+
+
 class MainWindow(QMainWindow):
     def __init__(self, column_count = 3, splitter: SplitterEngine = None, lookup: LookupEngine = None, displayer: DisplayerEngine = None, splitter_funcs=None, lookup_funcs=None, lookup_general_funcs = None, displayer_funcs=None, shortcut_funcs = None, dictionary_file=None, font_list=None, cursor_follow = True):
         super().__init__()
@@ -195,7 +223,7 @@ class MainWindow(QMainWindow):
         self.cursor_follow = cursor_follow
         self.loginfo = ''
         self.shortcut_dic = {}
-        self.lookup.dictionary_file = dictionary_file if dictionary_file else None
+        self.lookup.dictionary_file = dictionary_file if dictionary_file else self.lookup.dictionary_file
 
         if displayer is None:
             self.displayers = [DisplayerEngine() for _ in range(column_count)]
@@ -228,7 +256,7 @@ class MainWindow(QMainWindow):
         self.split_text = self.splitter.split('')
 
         self.setWindowTitle("Text Processor")
-        self.setGeometry(100, 100, 1000, 800)
+        self.setGeometry(100, 100, 1000, 600)
         self.initUI()
         self.setup_signals()
         self.update_lookup()
@@ -241,6 +269,7 @@ class MainWindow(QMainWindow):
 
         self.dict_path_edit = QLineEdit()
         self.dict_path_edit.setPlaceholderText("词典路径")
+        self.dict_path_edit.setText(self.lookup.dictionary_file if self.lookup.dictionary_file else "")
         self.index_column_edit = QLineEdit()
         self.index_column_edit.setPlaceholderText("索引列")
         self.index_column_edit.setText(str(1))
@@ -248,6 +277,8 @@ class MainWindow(QMainWindow):
         self.clear_cache_button = QPushButton("清理缓存")
         self.cursor_follow_box = QCheckBox("光标跟踪")
         self.cursor_follow_box.setChecked(self.cursor_follow)
+        self.sync_cursor_button = QPushButton("同步光标")
+
         
         self.splitter_func_box = QComboBox()
         self.splitter_func_box.addItems(self.splitter.get_splitter_dict())
@@ -280,7 +311,7 @@ class MainWindow(QMainWindow):
         splitter_layout.addWidget(self.splitter_lang_edit)   
         splitter_layout.setStretch(2,1) #伸缩比为1（islang_regex_edit的1/4）
         splitter_layout.addWidget(self.cursor_follow_box) 
-        
+        splitter_layout.addWidget(self.sync_cursor_button)        
         
 
         lookup_layout = QHBoxLayout()
@@ -292,10 +323,11 @@ class MainWindow(QMainWindow):
         lookup_layout.addWidget(self.clear_cache_button)
 
         log_layout = QHBoxLayout()
-        log_layout.addWidget(self.log_text_edit)
-        log_layout.setStretch(0,3) #伸缩比为3
         log_layout.addWidget(self.shortcut_table)
-        log_layout.setStretch(1,2) #伸缩比为1
+        log_layout.setStretch(0,2) #伸缩比为1
+        log_layout.addWidget(self.log_text_edit)
+        log_layout.setStretch(1,3) #伸缩比为3
+        
 
         main_layout = QVBoxLayout()
         main_layout.addLayout(text_layout)
@@ -308,7 +340,12 @@ class MainWindow(QMainWindow):
 
         container = QWidget()
         container.setLayout(main_layout)
-        self.setCentralWidget(container)
+
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setWidget(container)
+        
+        self.setCentralWidget(scroll_area)
 
     def setup_signals(self):
         self.update_lookup_button.clicked.connect(self.update_lookup)
@@ -318,6 +355,7 @@ class MainWindow(QMainWindow):
         self.splitter_lang_edit.returnPressed.connect(self.update_splitter_lang)
         self.cursor_follow_box.stateChanged.connect(self.update_cursor_follow)
         self.shortcut_table.cellDoubleClicked.connect(self.on_shortcut_table_double_click)
+        self.sync_cursor_button.clicked.connect(self.sync_cursor)
 
         self.columns[0].isoriginal = True
         self.columns[0].main_text_edit.textChanged.connect(self.refresh_text)
@@ -475,7 +513,15 @@ class MainWindow(QMainWindow):
             self.refresh_text()
         except Exception as e:
             self.log_error(f"Error in update_key_func_list: {str(e)}")
-            
+
+    def sync_cursor(self):
+        try:
+            for column in self.columns:
+                if not column.isoriginal:
+                    column.sync_cursor()
+            self.on_cursor_moved()
+        except Exception as e:
+            self.log_error(f"Error in set_cursor_visible: {str(e)}")     
 
     def log_error(self, message):
         self.loginfo += message + "\n"
@@ -491,7 +537,11 @@ def LangInterface(column_count = 3, splitter: SplitterEngine = None, lookup: Loo
 
 #For test
 if __name__ == "__main__":
-    def set_sp(lemma):
-	    if langdeterminer.is_punct(lemma.original[0]):
-		    lemma.properties['space'] = 'space'   
-    LangInterface(1,lookup_general_funcs=[set_sp])
+    def upper(lemma):
+        if lemma.original:
+            if lemma.original[0] == 'H':
+                return lemma.original.lower()
+        return lemma.original.upper()
+
+    import cProfile                
+    cProfile.run(LangInterface(2,lookup_funcs=[upper]), 'profile_output.prof')

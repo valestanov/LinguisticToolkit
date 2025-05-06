@@ -19,6 +19,7 @@ def islang_by_name(lang_name):
         "sanskrit": is_sa,
         "hindi": is_sa,
         "devanagari": is_sa,
+        "tibetan": is_bo,
     }
     if lang_name in lang_dict:
         return lang_dict[lang_name]
@@ -121,6 +122,12 @@ def is_sa(char):
 
 def is_vi(char):
     if char in 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚÝàáâãèéêìíòóôõùúýĂăĐđĨĩŨũƠơƯưẠạẢảẤấẦầẨẩẪẫẬậẮắẰằẲẳẴẵẶặẸẹẺẻẼẽẾếỀềỂểỄễỆệỈỉỊịỌọỎỏỐốỒồỔổỖỗỘộỚớỜờỞởỠỡỢợỤụỦủỨứỪừỬửỮữỰựỲỳỴỵỶỷỸỹ':
+        return True
+    else:
+        return False
+
+def is_bo(char):
+    if '\u0f00' <= char <= '\u0fdf':
         return True
     else:
         return False

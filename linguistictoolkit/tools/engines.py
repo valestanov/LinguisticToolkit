@@ -140,12 +140,16 @@ class LookupEngine:
     def load_dictionary(self):
         try:
             import pandas as pd
+
+            #防止错误的处理"Nan","Na"等字符
+            default_nan_values = ['-1.#IND', '1.#QNAN', '1.#IND', '-1.#QNAN', '#N/A N/A', '#N/A', 'N/A', 'n/a', '#NA', '']
+
             if self.dictionary_file.endswith('.xls') or self.dictionary_file.endswith('.xlsx'):
-                df = pd.read_excel(self.dictionary_file,sheet_name=0)
+                df = pd.read_excel(self.dictionary_file,sheet_name=0,na_values=default_nan_values, keep_default_na=False)
             elif self.dictionary_file.endswith('.txt'):
-                df = pd.read_csv(self.dictionary_file, encoding='utf-8', delimiter='\t')
+                df = pd.read_csv(self.dictionary_file, encoding='utf-8', delimiter='\t',na_values=default_nan_values, keep_default_na=False)
             elif self.dictionary_file.endswith('.csv'):
-                df = pd.read_csv(self.dictionary_file, encoding='utf-8')
+                df = pd.read_csv(self.dictionary_file, encoding='utf-8',na_values=default_nan_values, keep_default_na=False)
             else:
                 raise ValueError("Unsupported file type")
         except Exception as e:
@@ -165,17 +169,29 @@ class LookupEngine:
         rows = df.values.tolist()
         max_columns = max(len(row) for row in rows)
 
+        log_info = ''
+
         for row in rows:
             key = row[self.index_column - 1]
-            if (key and key.strip()):
-                if key not in self.dictionary:
-                    self.dictionary[key] = {f"列{i+1}": str(row[i]) for i in range(len(row))}
-                else:
-                    for i in range(len(row)):
-                        if f"列{i+1}" not in self.dictionary[key]:
-                            self.dictionary[key][f"列{i+1}"] = str(row[i])
-                        else:
-                            self.dictionary[key][f"列{i+1}"] += ("|" + str(row[i]))
+            try:
+                if (key and key.strip()):
+                    #藏语特殊处理
+                    key = key.strip('་ ')
+                    if key not in self.dictionary:
+                        self.dictionary[key] = {f"列{i+1}": str(row[i]) for i in range(len(row))}
+                    else:
+                        for i in range(len(row)):
+                            if f"列{i+1}" not in self.dictionary[key]:
+                                self.dictionary[key][f"列{i+1}"] = str(row[i])
+                            else:
+                                self.dictionary[key][f"列{i+1}"] += ("|" + str(row[i]))
+            except Exception as e:
+                log_info += f'读取失败：{key}, {str(row)}'
+                continue
+        
+        if log_info != "":
+            raise ValueError(f"部分数据读取失败：\n{log_info}")
+
 
         def create_func(column):
             return lambda lemma: self.dictionary.get(lemma.for_match, {}).get(column, lemma.original)
@@ -209,8 +225,6 @@ class LookupEngine:
                 lemma.dict_content[key] = self.func_list[func](lemma)
             except:
                 lemma.dict_content[key] = lemma.original
-        for func in self.general_func_list.values():
-            func(lemma)
 
     def lookup(self, split_text):
         split_text.compare_vocabulary(self.vocab)
@@ -220,6 +234,8 @@ class LookupEngine:
             else:
                 self.lookup_word(lemma)
                 self.cache_dictionary[lemma.original] = lemma.dict_content
+            for func in self.general_func_list.values():
+                func(lemma)
 
     def get_func_list(self) -> List[str]:
         # 获取函数列表
@@ -265,6 +281,15 @@ class DisplayerEngine:
             output_html += self.display_word(lemma, index)
         return output_html
 
+    def get_cursor_text(self, split_text: SentenceSplitter) -> str:
+        output_html = ''
+        # 将整个 SentenceSplitter 对象转换为 HTML 文本
+        for index, lemma in enumerate(split_text):
+            output_html += self.display_word(lemma, index)
+            if lemma.isFocus:
+                break
+            #在焦点处结束
+        return output_html
 
     def introduce_func(self, func):
         func = self._convert_to_lemma(func)
@@ -343,7 +368,7 @@ class DisplayerEngine:
 
     def apply_rainbow(self, output: str, index: int) -> str:
         # 应用彩虹色显示
-        colors = ["red", "green", "blue", "turquoise", "purple", "maroon"]
+        colors = ["red", "green", "maroon", "blue", "turquoise", "purple"]
         if self.rainbow:
             color = colors[index % len(colors)]
             output = self.add_style(output, "color", color)
