@@ -9,10 +9,6 @@ from linguistictoolkit.tools import widget
 from linguistictoolkit.tools import interface
 from linguistictoolkit.tools import langdeterminer
 from linguistictoolkit.tools import engines
-from linguistictoolkit.korean import ankimasker
-from linguistictoolkit.vietnamese import Qnc2Telex
-from linguistictoolkit import zhuang
-from linguistictoolkit import bai
-from linguistictoolkit import fuzhou
-from linguistictoolkit import vietnamese
-from linguistictoolkit import korean
+from linguistictoolkit.langs.korean import ankimasker
+from linguistictoolkit.langs.vietnamese import Qnc2Telex
+from linguistictoolkit import langs

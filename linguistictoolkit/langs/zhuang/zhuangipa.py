@@ -2,7 +2,7 @@ import sys
 import os
 
 def initialisedic():
-    folder = sys.path[0]
+    folder = os.path.dirname(os.path.abspath(__file__))
     smipafile = os.path.join(folder,'smipa.txt')
     ymipafile = os.path.join(folder,'ymipa.txt')
     sdipafile = os.path.join(folder,'sdipa.txt')
@@ -127,7 +127,10 @@ def filetoipa():
 
 if __name__ == "__main__":
     print ('Initializing......')
-    initialisedic()
+
+initialisedic()
+
+if __name__ == "__main__":
     print ('Initialized!\n')
     inputsc = ' '
     while inputsc != '':
